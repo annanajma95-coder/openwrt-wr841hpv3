@@ -29,10 +29,6 @@ config_enable CONFIG_PACKAGE_luci-base
 config_enable CONFIG_PACKAGE_luci-mod-admin-full
 config_enable CONFIG_PACKAGE_luci-theme-bootstrap
 
-# Enable the shadow-utils menu first; shadow-chpasswd is a sub-option of it.
-config_enable CONFIG_PACKAGE_shadow-utils
-config_enable CONFIG_PACKAGE_shadow-chpasswd
-
 # Wi-Fi QCA9533 / ath9k
 config_enable CONFIG_PACKAGE_kmod-ath9k
 config_enable CONFIG_PACKAGE_iw
@@ -61,41 +57,8 @@ config_disable CONFIG_PACKAGE_tcpdump
 make defconfig
 
 # Pastikan profil perangkat tidak terhapus oleh resolusi dependensi.
-grep -qx 'CONFIG_PACKAGE_shadow-utils=y' .config || {
-    echo "ERROR: shadow-utils menu is required to expose shadow-chpasswd" >&2
-    exit 1
-}
-
-grep -qx 'CONFIG_PACKAGE_shadow-chpasswd=y' .config || {
-    echo "ERROR: shadow-chpasswd is required for first-boot password configuration" >&2
-    exit 1
-}
-
 grep -qx 'CONFIG_TARGET_ath79_generic_DEVICE_tplink_tl-wr841hp-v3=y' .config || {
     echo "ERROR: profil TL-WR841HP v3 tidak aktif setelah make defconfig" >&2
     exit 1
 }
 
-# Konfigurasi default router: Wi-Fi aktif dan OpenNDS mati.
-mkdir -p files/etc/uci-defaults
-cat > files/etc/uci-defaults/99-custom-config <<'EOF'
-#!/bin/sh
-
-# Aktifkan semua radio Wi-Fi yang tersedia.
-uci -q show wireless | \
-  sed -n 's/^\(wireless\.[^.]*\)=wifi-device$/\1/p' | \
-  while read -r radio; do
-    uci set "${radio}.disabled=0"
-  done
-
-# OpenNDS terpasang, tetapi tidak aktif saat boot.
-if [ -x /etc/init.d/opennds ]; then
-    /etc/init.d/opennds disable
-    /etc/init.d/opennds stop || true
-fi
-
-uci commit wireless
-exit 0
-EOF
-
-chmod 0755 files/etc/uci-defaults/99-custom-config
