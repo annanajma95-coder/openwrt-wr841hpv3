@@ -35,8 +35,9 @@ uci set dhcp.lan.ignore='0'
 # LED definitions are owned by the OpenWrt board.d profile; do not override them here.
 
 # Primary protected WLAN.
-radio="$(uci show wireless | sed -n 's/^wireless\.\([^=]*\)=wifi-device$/\1/p' | head -n 1)"
-iface="$(uci show wireless | sed -n 's/^wireless\.\([^=]*\)=wifi-iface$/\1/p' | head -n 1)"
+wireless_config="$(uci show wireless)"
+radio="$(printf '%s\n' "$wireless_config" | sed -n 's/^wireless\.\([^=]*\)=wifi-device$/\1/p' | head -n 1)"
+iface="$(printf '%s\n' "$wireless_config" | sed -n 's/^wireless\.\([^=]*\)=wifi-iface$/\1/p' | head -n 1)"
 [ -n "$radio" ] || { logger -t 99-custom-config "No Wi-Fi radio found"; exit 1; }
 if [ -z "$iface" ]; then
     uci set wireless.main_ap='wifi-iface'
@@ -118,9 +119,6 @@ if uci -q get network.wan6 >/dev/null 2>&1; then
     uci delete network.wan6
 fi
 
-uci commit system
-uci commit wireless
-uci commit network
-uci commit dhcp
-uci commit firewall
+# Commit all changed UCI packages in one invocation to reduce first-boot overhead.
+uci commit
 exit 0
