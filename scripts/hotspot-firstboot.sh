@@ -103,6 +103,13 @@ uci set firewall.voucher_wan.dest='wan'
 uci -q set opennds.@opennds[0].enabled='1'
 uci -q set opennds.@opennds[0].gatewayinterface='br-voucher'
 
+# Remove permissive defaults (SSH, Telnet, HTTP/HTTPS to router) for unauthenticated guests.
+uci -q delete opennds.@opennds[0].users_to_router || true
+uci -q add_list opennds.@opennds[0].users_to_router='allow udp port 53'
+uci -q add_list opennds.@opennds[0].users_to_router='allow tcp port 53'
+uci -q add_list opennds.@opennds[0].users_to_router='allow udp port 67'
+uci -q add_list opennds.@opennds[0].users_to_router='allow tcp port 2050'
+
 uci commit system
 uci commit wireless
 uci commit network
