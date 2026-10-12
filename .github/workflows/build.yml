@@ -18,6 +18,9 @@ jobs:
 
     env:
       DEBIAN_FRONTEND: noninteractive
+      # OpenWrt builds run as root inside the Ubuntu container.
+      # GNU tar's configure otherwise aborts when building host tools.
+      FORCE_UNSAFE_CONFIGURE: "1"
       OPENWRT_VERSION: v19.07.9
       DEVICE_COMMIT: c5235f6b2441a6b531622b76b66c354896c0dae0
 
@@ -43,8 +46,6 @@ jobs:
             --branch "$OPENWRT_VERSION" \
             https://github.com/openwrt/openwrt.git openwrt
 
-      # Do not cherry-pick the whole 2021 commit: the 19.07 tree has
-      # different board.d paths and image Makefile context.
       - name: Backport WR841HP v3 device support
         shell: bash
         working-directory: openwrt
@@ -57,7 +58,6 @@ jobs:
           git show "$DEVICE_COMMIT:target/linux/ath79/dts/qca9533_tplink_tl-wr841hp-v3.dts" \
             > target/linux/ath79/dts/qca9533_tplink_tl-wr841hp-v3.dts
 
-          # Add the device definition using the 19.07 image Makefile layout.
           if ! grep -q 'Device/tplink_tl-wr841hp-v3' target/linux/ath79/image/generic-tp-link.mk; then
             cat >> target/linux/ath79/image/generic-tp-link.mk <<'EOF'
 
@@ -71,7 +71,6 @@ jobs:
           EOF
           fi
 
-          # 19.07 stores these scripts under ath79/base-files, not ath79/generic.
           python3 - <<'PY'
           from pathlib import Path
 
