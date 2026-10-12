@@ -1,6 +1,8 @@
 #!/bin/sh
-# Installed by the workflow as /etc/uci-defaults/99-custom-config.
+# One-shot first-boot configuration, installed as /etc/uci-defaults/99-custom-config.
+# OpenWrt removes this script after a successful exit.
 set -eu
+
 wlan_name="SEGALA TEKNIK"
 wlan_password="takonobojoku"
 root_password="enter"
@@ -9,116 +11,97 @@ time_zone="WIB-7"
 zone_name="Asia/Jakarta"
 lan_ip_address="192.168.100.1"
 
-# Keep OpenNDS enabled at boot. The config file is the single source of truth.
-# Enable its init script; normal boot service ordering starts it after this setup.
-if [ -x /etc/init.d/opennds ]; then
-    /etc/init.d/opennds enable
-fi
-
-# Set root password using BusyBox passwd.
-if [ -n "$root_password" ]; then
-    (echo "$root_password"; sleep 1; echo "$root_password") | passwd >/dev/null
-fi
-
-# Hostname and time.
-uci set system.@system[0].hostname="$host_name"
-uci set system.@system[0].timezone="$time_zone"
-uci set system.@system[0].zonename="$zone_name"
-
-# Management LAN.
-uci set network.lan.proto='static'
-uci set network.lan.ipaddr="$lan_ip_address"
-uci set network.lan.netmask='255.255.255.0'
-uci set dhcp.lan.interface='lan'
-uci set dhcp.lan.ignore='0'
-
-# LED definitions are owned by the OpenWrt board.d profile; do not override them here.
-
-# Primary protected WLAN.
+# Resolve the generated radio/interface once; do not create a duplicate primary AP.
 wireless_config="$(uci show wireless)"
 radio="$(printf '%s\n' "$wireless_config" | sed -n 's/^wireless\.\([^=]*\)=wifi-device$/\1/p' | head -n 1)"
 iface="$(printf '%s\n' "$wireless_config" | sed -n 's/^wireless\.\([^=]*\)=wifi-iface$/\1/p' | head -n 1)"
 [ -n "$radio" ] || { logger -t 99-custom-config "No Wi-Fi radio found"; exit 1; }
 if [ -z "$iface" ]; then
-    uci set wireless.main_ap='wifi-iface'
-    iface='main_ap'
-fi
-uci set "wireless.$radio.disabled=0"
-uci set "wireless.$radio.country=ID"
-uci set "wireless.$iface.device=$radio"
-uci set "wireless.$iface.mode=ap"
-uci set "wireless.$iface.network=lan"
-uci set "wireless.$iface.disabled=0"
-uci set "wireless.$iface.encryption=psk2"
-uci set "wireless.$iface.ssid=$wlan_name"
-uci set "wireless.$iface.key=$wlan_password"
-
-# Separate guest WLAN / DHCP network handled by OpenNDS voucher authentication.
-uci -q delete network.voucher || true
-uci set network.voucher='interface'
-uci set network.voucher.type='bridge'
-uci set network.voucher.proto='static'
-uci set network.voucher.ipaddr='192.168.20.1'
-uci set network.voucher.netmask='255.255.255.0'
-uci set network.voucher.delegate='0'
-uci -q delete dhcp.voucher || true
-uci set dhcp.voucher='dhcp'
-uci set dhcp.voucher.interface='voucher'
-uci set dhcp.voucher.start='100'
-uci set dhcp.voucher.limit='150'
-uci set dhcp.voucher.leasetime='1h'
-uci set dhcp.voucher.dhcpv6='disabled'
-uci set dhcp.voucher.ra='disabled'
-
-uci -q delete wireless.hotspot || true
-uci set wireless.hotspot='wifi-iface'
-uci set wireless.hotspot.device="$radio"
-uci set wireless.hotspot.mode='ap'
-uci set wireless.hotspot.network='voucher'
-uci set wireless.hotspot.ssid='HOTSPOT'
-uci set wireless.hotspot.encryption='none'
-uci set wireless.hotspot.isolate='1'
-uci set wireless.hotspot.disabled='0'
-
-# Restrict guests from router/LAN; allow DHCP/DNS and WAN forwarding.
-uci -q delete firewall.voucher || true
-uci set firewall.voucher='zone'
-uci set firewall.voucher.name='voucher'
-uci set firewall.voucher.network='voucher'
-uci set firewall.voucher.input='REJECT'
-uci set firewall.voucher.output='ACCEPT'
-uci set firewall.voucher.forward='REJECT'
-uci -q delete firewall.voucher_dhcp || true
-uci set firewall.voucher_dhcp='rule'
-uci set firewall.voucher_dhcp.name='Allow-Voucher-DHCP'
-uci set firewall.voucher_dhcp.src='voucher'
-uci set firewall.voucher_dhcp.proto='udp'
-uci set firewall.voucher_dhcp.dest_port='67'
-uci set firewall.voucher_dhcp.target='ACCEPT'
-uci -q delete firewall.voucher_dns_udp || true
-uci set firewall.voucher_dns_udp='rule'
-uci set firewall.voucher_dns_udp.name='Allow-Voucher-DNS-UDP'
-uci set firewall.voucher_dns_udp.src='voucher'
-uci set firewall.voucher_dns_udp.proto='udp'
-uci set firewall.voucher_dns_udp.dest_port='53'
-uci set firewall.voucher_dns_udp.target='ACCEPT'
-uci -q delete firewall.voucher_dns_tcp || true
-uci set firewall.voucher_dns_tcp='rule'
-uci set firewall.voucher_dns_tcp.name='Allow-Voucher-DNS-TCP'
-uci set firewall.voucher_dns_tcp.src='voucher'
-uci set firewall.voucher_dns_tcp.proto='tcp'
-uci set firewall.voucher_dns_tcp.dest_port='53'
-uci set firewall.voucher_dns_tcp.target='ACCEPT'
-uci -q delete firewall.voucher_wan || true
-uci set firewall.voucher_wan='forwarding'
-uci set firewall.voucher_wan.src='voucher'
-uci set firewall.voucher_wan.dest='wan'
-
-# Remove WAN6 if it exists.
-if uci -q get network.wan6 >/dev/null 2>&1; then
-    uci delete network.wan6
+    iface="main_ap"
+    uci -q set "wireless.$iface=wifi-iface"
 fi
 
-# Commit all changed UCI packages in one invocation to reduce first-boot overhead.
+# Remove only sections that this script owns, then recreate them once in a batch.
+for section in network.voucher dhcp.voucher wireless.hotspot firewall.voucher firewall.voucher_dhcp firewall.voucher_dns_udp firewall.voucher_dns_tcp firewall.voucher_wan network.wan6; do
+    uci -q delete "$section" || true
+done
+
+uci -q batch <<EOF
+set system.@system[0].hostname='$host_name'
+set system.@system[0].timezone='$time_zone'
+set system.@system[0].zonename='$zone_name'
+set network.lan.proto='static'
+set network.lan.ipaddr='$lan_ip_address'
+set network.lan.netmask='255.255.255.0'
+set dhcp.lan.interface='lan'
+set dhcp.lan.ignore='0'
+set wireless.$radio.disabled='0'
+set wireless.$radio.country='ID'
+set wireless.$iface.device='$radio'
+set wireless.$iface.mode='ap'
+set wireless.$iface.network='lan'
+set wireless.$iface.disabled='0'
+set wireless.$iface.encryption='psk2'
+set wireless.$iface.ssid='$wlan_name'
+set wireless.$iface.key='$wlan_password'
+set network.voucher='interface'
+set network.voucher.type='bridge'
+set network.voucher.proto='static'
+set network.voucher.ipaddr='192.168.20.1'
+set network.voucher.netmask='255.255.255.0'
+set network.voucher.delegate='0'
+set dhcp.voucher='dhcp'
+set dhcp.voucher.interface='voucher'
+set dhcp.voucher.start='100'
+set dhcp.voucher.limit='150'
+set dhcp.voucher.leasetime='1h'
+set dhcp.voucher.dhcpv6='disabled'
+set dhcp.voucher.ra='disabled'
+set wireless.hotspot='wifi-iface'
+set wireless.hotspot.device='$radio'
+set wireless.hotspot.mode='ap'
+set wireless.hotspot.network='voucher'
+set wireless.hotspot.ssid='HOTSPOT'
+set wireless.hotspot.encryption='none'
+set wireless.hotspot.isolate='1'
+set wireless.hotspot.disabled='0'
+set firewall.voucher='zone'
+set firewall.voucher.name='voucher'
+set firewall.voucher.network='voucher'
+set firewall.voucher.input='REJECT'
+set firewall.voucher.output='ACCEPT'
+set firewall.voucher.forward='REJECT'
+set firewall.voucher_dhcp='rule'
+set firewall.voucher_dhcp.name='Allow-Voucher-DHCP'
+set firewall.voucher_dhcp.src='voucher'
+set firewall.voucher_dhcp.proto='udp'
+set firewall.voucher_dhcp.dest_port='67'
+set firewall.voucher_dhcp.target='ACCEPT'
+set firewall.voucher_dns_udp='rule'
+set firewall.voucher_dns_udp.name='Allow-Voucher-DNS-UDP'
+set firewall.voucher_dns_udp.src='voucher'
+set firewall.voucher_dns_udp.proto='udp'
+set firewall.voucher_dns_udp.dest_port='53'
+set firewall.voucher_dns_udp.target='ACCEPT'
+set firewall.voucher_dns_tcp='rule'
+set firewall.voucher_dns_tcp.name='Allow-Voucher-DNS-TCP'
+set firewall.voucher_dns_tcp.src='voucher'
+set firewall.voucher_dns_tcp.proto='tcp'
+set firewall.voucher_dns_tcp.dest_port='53'
+set firewall.voucher_dns_tcp.target='ACCEPT'
+set firewall.voucher_wan='forwarding'
+set firewall.voucher_wan.src='voucher'
+set firewall.voucher_wan.dest='wan'
+EOF
+
+# Set the root password once; the UCI defaults runner removes this script on success.
+printf '%s\n%s\n' "$root_password" "$root_password" | passwd >/dev/null
+
+# OpenNDS is configured in files/etc/config/opennds; only enable its init service here.
+if [ -x /etc/init.d/opennds ]; then
+    /etc/init.d/opennds enable
+fi
+
+# Persist all UCI changes in one commit.
 uci commit
 exit 0
