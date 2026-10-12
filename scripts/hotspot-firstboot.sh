@@ -9,11 +9,8 @@ time_zone="WIB-7"
 zone_name="Asia/Jakarta"
 lan_ip_address="192.168.100.1"
 
-# OpenNDS is installed but deliberately disabled.
-if [ -f /etc/config/opennds ]; then
-    uci -q set opennds.@opennds[0].enabled='0'
-    uci commit opennds
-fi
+# OpenNDS is configured disabled in /etc/config/opennds.
+# Only disable/stop the service here; do not duplicate its UCI setting.
 if [ -x /etc/init.d/opennds ]; then
     /etc/init.d/opennds disable 2>/dev/null || true
     /etc/init.d/opennds stop 2>/dev/null || true
@@ -36,18 +33,7 @@ uci set network.lan.netmask='255.255.255.0'
 uci set dhcp.lan.interface='lan'
 uci set dhcp.lan.ignore='0'
 
-# LEDs; these names are retained from the requested configuration.
-uci -q set system.led_power=led
-uci -q set system.led_power.name='Power'
-uci -q set system.led_power.sysfs='green:power'
-uci -q set system.led_power.trigger='timer'
-uci -q set system.led_power.delayon='500'
-uci -q set system.led_power.delayoff='5000'
-uci -q set system.led_wifi=led
-uci -q set system.led_wifi.name='Wifi'
-uci -q set system.led_wifi.sysfs='green:wifi'
-uci -q set system.led_wifi.trigger='none'
-uci -q set system.led_wifi.default='0'
+# LED definitions are owned by the OpenWrt board.d profile; do not override them here.
 
 # Primary protected WLAN.
 radio="$(uci show wireless | sed -n 's/^wireless\.\([^=]*\)=wifi-device$/\1/p' | head -n 1)"
@@ -138,5 +124,4 @@ uci commit wireless
 uci commit network
 uci commit dhcp
 uci commit firewall
-uci commit opennds
 exit 0
