@@ -136,7 +136,7 @@ jobs:
           grep -Fq "uci set network.voucher='interface'" ../scripts/hotspot-firstboot.sh
           grep -Fq "uci -q set opennds.@opennds[0].gatewayinterface='br-voucher'" ../scripts/hotspot-firstboot.sh
           grep -Fq "command -v chpasswd" ../scripts/hotspot-firstboot.sh
-          grep -Fq "CONFIG_PACKAGE_shadow-chpasswd=y" ../scripts/customize.sh
+          grep -Fq "config_enable CONFIG_PACKAGE_shadow-chpasswd" ../scripts/customize.sh
 
           # Fail closed rather than producing a firmware with a nonfunctional portal.
           test -s ../scripts/opennds
