@@ -34,7 +34,7 @@ config_enable CONFIG_PACKAGE_kmod-ath9k
 config_enable CONFIG_PACKAGE_iw
 config_enable CONFIG_PACKAGE_wireless-regdb
 
-# OpenNDS terpasang, tetapi dinonaktifkan saat boot oleh uci-defaults.
+# OpenNDS terpasang dan aktif saat boot.
 config_enable CONFIG_PACKAGE_opennds
 
 # Buang PPPoE

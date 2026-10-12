@@ -1,5 +1,5 @@
 config opennds
-	option enabled '0'
+	option enabled '1'
 	option fwhook_enabled '1'
 	option use_outdated_mhd '1'
 	option unescape_callback_enabled '0'

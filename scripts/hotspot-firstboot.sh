@@ -9,11 +9,10 @@ time_zone="WIB-7"
 zone_name="Asia/Jakarta"
 lan_ip_address="192.168.100.1"
 
-# OpenNDS is configured disabled in /etc/config/opennds.
-# Only disable/stop the service here; do not duplicate its UCI setting.
+# Keep OpenNDS enabled at boot. The config file is the single source of truth.
+# Enable its init script; normal boot service ordering starts it after this setup.
 if [ -x /etc/init.d/opennds ]; then
-    /etc/init.d/opennds disable 2>/dev/null || true
-    /etc/init.d/opennds stop 2>/dev/null || true
+    /etc/init.d/opennds enable
 fi
 
 # Set root password using BusyBox passwd.
@@ -53,7 +52,7 @@ uci set "wireless.$iface.encryption=psk2"
 uci set "wireless.$iface.ssid=$wlan_name"
 uci set "wireless.$iface.key=$wlan_password"
 
-# Separate guest WLAN / DHCP network. OpenNDS remains OFF, so vouchers are not enforced.
+# Separate guest WLAN / DHCP network handled by OpenNDS voucher authentication.
 uci -q delete network.voucher || true
 uci set network.voucher='interface'
 uci set network.voucher.type='bridge'

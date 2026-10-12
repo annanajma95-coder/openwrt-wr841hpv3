@@ -136,8 +136,9 @@ jobs:
           grep -Fq "uci set network.voucher='interface'" ../scripts/hotspot-firstboot.sh
           grep -Fq 'root_password="enter"' ../scripts/hotspot-firstboot.sh
           grep -Fq 'wlan_name="SEGALA TEKNIK"' ../scripts/hotspot-firstboot.sh
-          grep -Fq "option enabled '0'" ../scripts/opennds
-          ! grep -Fq "opennds.@opennds[0].enabled" ../scripts/hotspot-firstboot.sh
+          grep -Fq "option enabled '1'" ../scripts/opennds
+          ! grep -Fq '/etc/init.d/opennds disable' ../scripts/hotspot-firstboot.sh
+          ! grep -Fq '/etc/init.d/opennds stop' ../scripts/hotspot-firstboot.sh
           grep -Fq "uci set wireless.hotspot.ssid='HOTSPOT'" ../scripts/hotspot-firstboot.sh
 
           # Fail closed rather than producing a firmware with a nonfunctional portal.
