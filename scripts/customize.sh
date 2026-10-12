@@ -29,6 +29,9 @@ config_enable CONFIG_PACKAGE_luci-base
 config_enable CONFIG_PACKAGE_luci-mod-admin-full
 config_enable CONFIG_PACKAGE_luci-theme-bootstrap
 
+# Required by first-boot password configuration (chpasswd).
+config_enable CONFIG_PACKAGE_shadow-chpasswd
+
 # Wi-Fi QCA9533 / ath9k
 config_enable CONFIG_PACKAGE_kmod-ath9k
 config_enable CONFIG_PACKAGE_iw
@@ -57,6 +60,11 @@ config_disable CONFIG_PACKAGE_tcpdump
 make defconfig
 
 # Pastikan profil perangkat tidak terhapus oleh resolusi dependensi.
+grep -qx 'CONFIG_PACKAGE_shadow-chpasswd=y' .config || {
+    echo "ERROR: shadow-chpasswd is required for first-boot password configuration" >&2
+    exit 1
+}
+
 grep -qx 'CONFIG_TARGET_ath79_generic_DEVICE_tplink_tl-wr841hp-v3=y' .config || {
     echo "ERROR: profil TL-WR841HP v3 tidak aktif setelah make defconfig" >&2
     exit 1
