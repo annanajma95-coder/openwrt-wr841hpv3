@@ -1,0 +1,148 @@
+name: Build OpenWrt 19.07.9 WR841HP v3
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/build.yml"
+      - "scripts/**"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    container:
+      image: ubuntu:20.04
+
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      # OpenWrt builds run as root inside the Ubuntu container.
+      # GNU tar's configure otherwise aborts when building host tools.
+      FORCE_UNSAFE_CONFIGURE: "1"
+      OPENWRT_VERSION: v19.07.9
+      DEVICE_COMMIT: c5235f6b2441a6b531622b76b66c354896c0dae0
+
+    steps:
+      - name: Install build dependencies
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            build-essential clang flex bison g++ gawk gcc-multilib \
+            gettext git libncurses5-dev libssl-dev python2 \
+            python3 python3-distutils rsync unzip zlib1g-dev \
+            file wget curl ca-certificates time perl \
+            patch subversion xz-utils zstd cpio
+
+      - name: Checkout build scripts
+        uses: actions/checkout@v4
+
+      - name: Clone OpenWrt 19.07.9
+        shell: bash
+        run: |
+          git clone --depth 1 \
+            --branch "$OPENWRT_VERSION" \
+            https://github.com/openwrt/openwrt.git openwrt
+
+      - name: Backport WR841HP v3 device support
+        shell: bash
+        working-directory: openwrt
+        run: |
+          set -euxo pipefail
+          git fetch --no-tags --depth=2 \
+            https://git.openwrt.org/openwrt/openwrt.git "$DEVICE_COMMIT"
+
+          mkdir -p target/linux/ath79/dts
+          git show "$DEVICE_COMMIT:target/linux/ath79/dts/qca9533_tplink_tl-wr841hp-v3.dts" \
+            > target/linux/ath79/dts/qca9533_tplink_tl-wr841hp-v3.dts
+          # OpenWrt 19.07's dtc requires the DTS version declaration.
+          sed -i '2i /dts-v1/;' target/linux/ath79/dts/qca9533_tplink_tl-wr841hp-v3.dts
+
+          if ! grep -q 'Device/tplink_tl-wr841hp-v3' target/linux/ath79/image/generic-tp-link.mk; then
+            cat >> target/linux/ath79/image/generic-tp-link.mk <<'EOF'
+
+          define Device/tplink_tl-wr841hp-v3
+            $(Device/tplink-8mlzma)
+            ATH_SOC := qca9533
+            DEVICE_TITLE := TP-Link TL-WR841HP v3
+            TPLINK_HWID := 0x08411003
+          endef
+          TARGET_DEVICES += tplink_tl-wr841hp-v3
+          EOF
+          fi
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          leds = Path("target/linux/ath79/base-files/etc/board.d/01_leds")
+          text = leds.read_text()
+          old = "tplink,archer-c60-v3)"
+          new = "tplink,archer-c60-v3|\\\ntplink,tl-wr841hp-v3)"
+          if "tplink,tl-wr841hp-v3" not in text:
+              if old not in text:
+                  raise SystemExit("Could not find LED insertion point in 01_leds")
+              leds.write_text(text.replace(old, new, 1))
+
+          network = Path("target/linux/ath79/base-files/etc/board.d/02_network")
+          text = network.read_text()
+          old = "tplink,tl-wr841-v9|\\"
+          new = "tplink,tl-wr841hp-v3|\\\n" + old
+          if "tplink,tl-wr841hp-v3" not in text:
+              if old not in text:
+                  raise SystemExit("Could not find network insertion point in 02_network")
+              network.write_text(text.replace(old, new, 1))
+          PY
+
+          test -s target/linux/ath79/dts/qca9533_tplink_tl-wr841hp-v3.dts
+          grep -q 'Device/tplink_tl-wr841hp-v3' target/linux/ath79/image/generic-tp-link.mk
+          grep -q 'tplink,tl-wr841hp-v3' target/linux/ath79/base-files/etc/board.d/01_leds
+          grep -q 'tplink,tl-wr841hp-v3' target/linux/ath79/base-files/etc/board.d/02_network
+
+      - name: Configure feeds
+        shell: bash
+        working-directory: openwrt
+        run: |
+          set -euxo pipefail
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          ./scripts/feeds install luci
+          ./scripts/feeds install opennds
+
+      - name: Configure firmware
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd openwrt
+          cp ../scripts/customize.sh ./customize.sh
+          chmod +x customize.sh
+          make defconfig
+          ./customize.sh
+
+      - name: Build firmware
+        shell: bash
+        working-directory: openwrt
+        run: |
+          set -euxo pipefail
+          make -j"$(nproc)" download
+          make -j2 V=s
+
+      - name: Verify output
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p artifacts
+          find openwrt/bin/targets -type f \
+            \( -name '*wr841hp*v3*' -o -name '*wr841hp-v3*' \) \
+            -exec cp -v {} artifacts/ \;
+          test -n "$(find artifacts -type f -name '*.bin' -print -quit)"
+          sha256sum artifacts/* > artifacts/SHA256SUMS
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: openwrt-19.07.9-wr841hp-v3
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14
