@@ -130,9 +130,13 @@ jobs:
           install -m 0755 ../scripts/hotspot-firstboot.sh files/etc/uci-defaults/99-custom-config
           install -m 0755 ../scripts/voucher.sh files/usr/lib/opennds/voucher.sh
 
-          # Validate that the first-boot script creates the network OpenNDS targets.
+          # Validate first-boot configuration before spending time on the full build.
+          sh -n ../scripts/hotspot-firstboot.sh
+          grep -Fq "uci set network.lan.ipaddr='192.168.100.1'" ../scripts/hotspot-firstboot.sh
           grep -Fq "uci set network.voucher='interface'" ../scripts/hotspot-firstboot.sh
           grep -Fq "uci -q set opennds.@opennds[0].gatewayinterface='br-voucher'" ../scripts/hotspot-firstboot.sh
+          grep -Fq "command -v chpasswd" ../scripts/hotspot-firstboot.sh
+          grep -Fq "CONFIG_PACKAGE_shadow-chpasswd=y" ../scripts/customize.sh
 
           # Fail closed rather than producing a firmware with a nonfunctional portal.
           test -s ../scripts/opennds
