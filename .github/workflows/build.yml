@@ -137,7 +137,8 @@ jobs:
           install -m 0600 ../scripts/vouchers files/etc/opennds/vouchers
 
           # Ensure OpenNDS remains included in the image.
-          grep -q '^CONFIG_PACKAGE_opennds=y
+          grep -q '^CONFIG_PACKAGE_opennds=y$' .config
+          make defconfig
 
           # Exclude optional LuCI IPv6/PPP protocol support from this image.
           config_disable() {
