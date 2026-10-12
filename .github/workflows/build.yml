@@ -148,19 +148,7 @@ jobs:
 
           # Ensure OpenNDS remains included in the image.
           grep -q '^CONFIG_PACKAGE_opennds=y$' .config
-          make defconfig
-
-          # Exclude optional LuCI IPv6/PPP protocol support from this image.
-          config_disable() {
-            symbol="$1"
-            sed -i "/^$symbol=/d; /^# $symbol is not set$/d" .config
-            printf '# %s is not set\n' "$symbol" >> .config
-          }
-          config_disable CONFIG_PACKAGE_luci-proto-ipv6
-          config_disable CONFIG_PACKAGE_luci-proto-ppp
-          config_disable CONFIG_PACKAGE_kmod-ip6tables
-          config_disable CONFIG_PACKAGE_kmod-ip6tables-extra
-          make defconfig
+          # All package selections are centralized in scripts/customize.sh.
 
       - name: Build firmware
         shell: bash

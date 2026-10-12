@@ -53,6 +53,12 @@ config_disable CONFIG_PACKAGE_ip6tables-extra
 config_disable CONFIG_PACKAGE_usbutils
 config_disable CONFIG_PACKAGE_tcpdump
 
+# LuCI protocol/kernel extras excluded from this lightweight image.
+config_disable CONFIG_PACKAGE_luci-proto-ipv6
+config_disable CONFIG_PACKAGE_luci-proto-ppp
+config_disable CONFIG_PACKAGE_kmod-ip6tables
+config_disable CONFIG_PACKAGE_kmod-ip6tables-extra
+
 # Terapkan dependensi pilihan paket.
 make defconfig
 
