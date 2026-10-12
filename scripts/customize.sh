@@ -8,13 +8,13 @@ cd "$(dirname "$0")"
 # adalah direktori). Ubah simbol .config secara langsung, lalu jalankan defconfig.
 config_enable() {
     local symbol="$1"
-    sed -i "/^\${symbol}=/d; /^# \${symbol} is not set$/d" .config
+    sed -i "/^${symbol}=/d; /^# ${symbol} is not set$/d" .config
     printf '%s=y\n' "$symbol" >> .config
 }
 
 config_disable() {
     local symbol="$1"
-    sed -i "/^\${symbol}=/d; /^# \${symbol} is not set$/d" .config
+    sed -i "/^${symbol}=/d; /^# ${symbol} is not set$/d" .config
     printf '# %s is not set\n' "$symbol" >> .config
 }
 
@@ -71,7 +71,7 @@ cat > files/etc/uci-defaults/99-custom-config <<'EOF'
 uci -q show wireless | \
   sed -n 's/^\(wireless\.[^.]*\)=wifi-device$/\1/p' | \
   while read -r radio; do
-    uci set "\${radio}.disabled=0"
+    uci set "${radio}.disabled=0"
   done
 
 # OpenNDS terpasang, tetapi tidak aktif saat boot.
