@@ -125,10 +125,14 @@ jobs:
         run: |
           set -euxo pipefail
           cd openwrt
-          mkdir -p files/etc/uci-defaults files/usr/lib/opennds files/etc/opennds
+          mkdir -p files/etc/uci-defaults files/etc/config files/etc/opennds files/usr/lib/opennds
 
           install -m 0755 ../scripts/hotspot-firstboot.sh files/etc/uci-defaults/99-custom-config
           install -m 0755 ../scripts/voucher.sh files/usr/lib/opennds/voucher.sh
+
+          # Validate that the first-boot script creates the network OpenNDS targets.
+          grep -Fq "uci set network.voucher='interface'" ../scripts/hotspot-firstboot.sh
+          grep -Fq "uci -q set opennds.@opennds[0].gatewayinterface='br-voucher'" ../scripts/hotspot-firstboot.sh
 
           # Fail closed rather than producing a firmware with a nonfunctional portal.
           test -s ../scripts/opennds
