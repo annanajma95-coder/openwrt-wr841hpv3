@@ -15,7 +15,11 @@ config opennds
 	option ratecheckwindow '2'
 	option uploadquota '0'
 	option downloadquota '0'
-	list authenticated_users 'allow all'
+	# Authenticated hotspot clients also must not access LuCI/SSH/Telnet.
+	list authenticated_users 'allow tcp port 53'
+	list authenticated_users 'allow udp port 53'
+	list authenticated_users 'allow udp port 67'
+	list authenticated_users 'allow tcp port 2050'
 	# Permit only services needed before voucher authentication.
 	list users_to_router 'allow tcp port 53'
 	list users_to_router 'allow udp port 53'
