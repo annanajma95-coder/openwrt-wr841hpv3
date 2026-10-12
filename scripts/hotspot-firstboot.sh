@@ -6,7 +6,20 @@ set -eu
 uci -q set system.@system[0].hostname='SAMSUNG'
 uci -q set system.@system[0].zonename='Asia/Jakarta'
 uci -q set system.@system[0].timezone='WIB-7'
+
+# Set the root password. The build explicitly includes shadow-chpasswd.
+command -v chpasswd >/dev/null 2>&1 || {
+    logger -t hotspot-firstboot "ERROR: chpasswd is missing"
+    exit 1
+}
 printf '%s\n' 'root:enter' | chpasswd
+
+# Configure the primary management LAN. Keep the voucher network separate.
+uci set network.lan.proto='static'
+uci set network.lan.ipaddr='192.168.100.1'
+uci set network.lan.netmask='255.255.255.0'
+uci set dhcp.lan.interface='lan'
+uci set dhcp.lan.ignore='0'
 
 # Keep the protected SSID on the existing LAN network.
 uci show wireless | sed -n 's/^wireless\.\([^=]*\)=wifi-device$/\1/p' |
@@ -16,6 +29,8 @@ done
 uci show wireless | sed -n 's/^wireless\.\([^=]*\)=wifi-iface$/\1/p' |
 while read -r section; do
     [ -n "$section" ] || continue
+    uci -q set "wireless.$section.network=lan"
+    uci -q set "wireless.$section.mode=ap"
     uci -q set "wireless.$section.ssid=SEGALA TEKNIK"
     uci -q set "wireless.$section.encryption=psk2"
     uci -q set "wireless.$section.key=takonobojoku"
