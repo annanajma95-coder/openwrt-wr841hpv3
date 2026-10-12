@@ -120,6 +120,83 @@ jobs:
           make defconfig
           ./customize.sh
 
+      - name: Apply router defaults and remove IPv6/PPP packages
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd openwrt
+
+          # Disable optional IPv6 and PPP LuCI/protocol packages as well.
+          config_disable() {
+            local symbol="$1"
+            sed -i "/^${symbol}=/d; /^# ${symbol} is not set$/d" .config
+            printf '# %s is not set\n' "$symbol" >> .config
+          }
+          config_disable CONFIG_PACKAGE_luci-proto-ipv6
+          config_disable CONFIG_PACKAGE_luci-proto-ppp
+          config_disable CONFIG_PACKAGE_kmod-ip6tables
+          config_disable CONFIG_PACKAGE_kmod-ip6tables-extra
+          make defconfig
+
+          mkdir -p files/etc/uci-defaults
+          cat > files/etc/uci-defaults/99-custom-config <<'EOF'
+          #!/bin/sh
+
+          # Router identity and Indonesian Western Time (WIB, UTC+7).
+          uci set system.@system[0].hostname='SAMSUNG'
+          uci set system.@system[0].zonename='Asia/Jakarta'
+          uci set system.@system[0].timezone='WIB-7'
+
+          # Set the requested root password on first boot.
+          printf '%s\n' 'root:enter' | chpasswd
+
+          # Configure all existing Wi-Fi interfaces.
+          uci show wireless | sed -n 's/^wireless\.\([^=]*\)=wifi-iface$/\1/p' |
+          while read -r section; do
+              [ -n "$section" ] || continue
+              uci set "wireless.$section.ssid=SEGALA TEKNIK"
+              uci set "wireless.$section.encryption=psk2"
+              uci set "wireless.$section.key=takonobojoku"
+              uci set "wireless.$section.disabled=0"
+          done
+
+          # Turn on radios where present.
+          uci show wireless | sed -n 's/^wireless\.\([^=]*\)=wifi-device$/\1/p' |
+          while read -r radio; do
+              [ -n "$radio" ] || continue
+              uci set "wireless.$radio.disabled=0"
+          done
+
+          # Remove WAN6 and disable IPv6 delegation/settings.
+          uci -q delete network.wan6 || true
+          for section in $(uci show network | sed -n 's/^network\.\([^.=]*\)=interface$/\1/p'); do
+              uci -q delete "network.$section.ip6assign" || true
+              uci -q delete "network.$section.ip6hint" || true
+              uci -q delete "network.$section.ip6ifaceid" || true
+              uci -q set "network.$section.delegate=0" || true
+          done
+
+          # Disable IPv6 at the kernel sysctl level too.
+          cat >> /etc/sysctl.conf <<'SYSCTL'
+          net.ipv6.conf.all.disable_ipv6=1
+          net.ipv6.conf.default.disable_ipv6=1
+          net.ipv6.conf.lo.disable_ipv6=1
+          SYSCTL
+
+          for service in odhcp6c odhcpd; do
+              if [ -x "/etc/init.d/$service" ]; then
+                  /etc/init.d/"$service" disable || true
+                  /etc/init.d/"$service" stop || true
+              fi
+          done
+
+          uci commit system
+          uci commit wireless
+          uci commit network
+          exit 0
+          EOF
+          chmod 0755 files/etc/uci-defaults/99-custom-config
+
       - name: Build firmware
         shell: bash
         working-directory: openwrt
