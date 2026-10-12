@@ -61,14 +61,14 @@ jobs:
           if ! grep -q 'Device/tplink_tl-wr841hp-v3' target/linux/ath79/image/generic-tp-link.mk; then
             cat >> target/linux/ath79/image/generic-tp-link.mk <<'EOF'
 
-            define Device/tplink_tl-wr841hp-v3
-              $(Device/tplink-8mlzma)
-              ATH_SOC := qca9533
-              DEVICE_TITLE := TP-Link TL-WR841HP v3
-              TPLINK_HWID := 0x08411003
-            endef
-            TARGET_DEVICES += tplink_tl-wr841hp-v3
-            EOF
+          define Device/tplink_tl-wr841hp-v3
+            $(Device/tplink-8mlzma)
+            ATH_SOC := qca9533
+            DEVICE_TITLE := TP-Link TL-WR841HP v3
+            TPLINK_HWID := 0x08411003
+          endef
+          TARGET_DEVICES += tplink_tl-wr841hp-v3
+          EOF
           fi
 
           # 19.07 stores these scripts under ath79/base-files, not ath79/generic.
