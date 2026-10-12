@@ -57,6 +57,8 @@ jobs:
           mkdir -p target/linux/ath79/dts
           git show "$DEVICE_COMMIT:target/linux/ath79/dts/qca9533_tplink_tl-wr841hp-v3.dts" \
             > target/linux/ath79/dts/qca9533_tplink_tl-wr841hp-v3.dts
+          # OpenWrt 19.07's dtc requires the DTS version declaration.
+          sed -i '2i /dts-v1/;' target/linux/ath79/dts/qca9533_tplink_tl-wr841hp-v3.dts
 
           if ! grep -q 'Device/tplink_tl-wr841hp-v3' target/linux/ath79/image/generic-tp-link.mk; then
             cat >> target/linux/ath79/image/generic-tp-link.mk <<'EOF'
