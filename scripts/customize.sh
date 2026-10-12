@@ -29,7 +29,8 @@ config_enable CONFIG_PACKAGE_luci-base
 config_enable CONFIG_PACKAGE_luci-mod-admin-full
 config_enable CONFIG_PACKAGE_luci-theme-bootstrap
 
-# Required by first-boot password configuration (chpasswd).
+# Enable the shadow-utils menu first; shadow-chpasswd is a sub-option of it.
+config_enable CONFIG_PACKAGE_shadow-utils
 config_enable CONFIG_PACKAGE_shadow-chpasswd
 
 # Wi-Fi QCA9533 / ath9k
@@ -60,6 +61,11 @@ config_disable CONFIG_PACKAGE_tcpdump
 make defconfig
 
 # Pastikan profil perangkat tidak terhapus oleh resolusi dependensi.
+grep -qx 'CONFIG_PACKAGE_shadow-utils=y' .config || {
+    echo "ERROR: shadow-utils menu is required to expose shadow-chpasswd" >&2
+    exit 1
+}
+
 grep -qx 'CONFIG_PACKAGE_shadow-chpasswd=y' .config || {
     echo "ERROR: shadow-chpasswd is required for first-boot password configuration" >&2
     exit 1
