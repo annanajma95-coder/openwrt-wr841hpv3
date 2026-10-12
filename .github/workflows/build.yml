@@ -107,8 +107,6 @@ jobs:
           set -euxo pipefail
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-          ./scripts/feeds install luci
-          ./scripts/feeds install opennds
 
       - name: Configure firmware
         shell: bash
@@ -117,7 +115,6 @@ jobs:
           cd openwrt
           cp ../scripts/customize.sh ./customize.sh
           chmod +x customize.sh
-          make defconfig
           ./customize.sh
 
       - name: Install 99-custom-config first-boot settings
@@ -127,7 +124,7 @@ jobs:
           cd openwrt
           mkdir -p files/etc/uci-defaults files/etc/config files/etc/opennds files/usr/lib/opennds
 
-          install -m 0755 ../scripts/hotspot-firstboot.sh files/etc/uci-defaults/99-custom-config
+          install -m 0644 ../scripts/hotspot-firstboot.sh files/etc/uci-defaults/99-custom-config
           install -m 0755 ../scripts/voucher.sh files/usr/lib/opennds/voucher.sh
 
           # Validate first-boot configuration before spending time on the full build.
