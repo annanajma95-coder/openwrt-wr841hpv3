@@ -132,11 +132,12 @@ jobs:
 
           # Validate first-boot configuration before spending time on the full build.
           sh -n ../scripts/hotspot-firstboot.sh
-          grep -Fq "uci set network.lan.ipaddr='192.168.100.1'" ../scripts/hotspot-firstboot.sh
+          grep -Fq 'lan_ip_address="192.168.100.1"' ../scripts/hotspot-firstboot.sh
           grep -Fq "uci set network.voucher='interface'" ../scripts/hotspot-firstboot.sh
           grep -Fq 'root_password="enter"' ../scripts/hotspot-firstboot.sh
           grep -Fq 'wlan_name="SEGALA TEKNIK"' ../scripts/hotspot-firstboot.sh
           grep -Fq "uci -q set opennds.@opennds[0].enabled='0'" ../scripts/hotspot-firstboot.sh
+          grep -Fq "uci set wireless.hotspot.ssid='HOTSPOT'" ../scripts/hotspot-firstboot.sh
 
           # Fail closed rather than producing a firmware with a nonfunctional portal.
           test -s ../scripts/opennds
