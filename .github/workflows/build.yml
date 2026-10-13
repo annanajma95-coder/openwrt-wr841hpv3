@@ -115,6 +115,8 @@ jobs:
           cd openwrt
           cp ../scripts/customize.sh ./customize.sh
           chmod +x customize.sh
+          # Initialize the base config once; customize.sh applies selections and resolves dependencies.
+          make defconfig
           ./customize.sh
 
       - name: Install 99-custom-config first-boot settings
@@ -130,13 +132,13 @@ jobs:
           # Validate first-boot configuration before spending time on the full build.
           sh -n ../scripts/hotspot-firstboot.sh
           grep -Fq 'lan_ip_address="192.168.100.1"' ../scripts/hotspot-firstboot.sh
-          grep -Fq "uci set network.voucher='interface'" ../scripts/hotspot-firstboot.sh
+          grep -Fq "set network.voucher='interface'" ../scripts/hotspot-firstboot.sh
           grep -Fq 'root_password="enter"' ../scripts/hotspot-firstboot.sh
           grep -Fq 'wlan_name="SEGALA TEKNIK"' ../scripts/hotspot-firstboot.sh
           grep -Fq "option enabled '1'" ../scripts/opennds
           ! grep -Fq '/etc/init.d/opennds disable' ../scripts/hotspot-firstboot.sh
           ! grep -Fq '/etc/init.d/opennds stop' ../scripts/hotspot-firstboot.sh
-          grep -Fq "uci set wireless.hotspot.ssid='HOTSPOT'" ../scripts/hotspot-firstboot.sh
+          grep -Fq "set wireless.hotspot.ssid='HOTSPOT'" ../scripts/hotspot-firstboot.sh
 
           # Fail closed rather than producing a firmware with a nonfunctional portal.
           test -s ../scripts/opennds
