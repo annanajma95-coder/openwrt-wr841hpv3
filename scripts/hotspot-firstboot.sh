@@ -22,9 +22,20 @@ if [ -z "$iface" ]; then
 fi
 
 # Remove only sections that this script owns, then recreate them once in a batch.
-for section in network.voucher dhcp.voucher wireless.hotspot firewall.voucher firewall.voucher_dhcp firewall.voucher_dns_udp firewall.voucher_dns_tcp firewall.voucher_wan network.wan6; do
+for section in network.voucher dhcp.voucher wireless.hotspot firewall.voucher firewall.voucher_dhcp firewall.voucher_dns_udp firewall.voucher_dns_tcp firewall.voucher_wan network.wan6 dhcp.wan6; do
     uci -q delete "$section" || true
 done
+
+# Remove IPv6-only firewall rules by name; avoid fragile hard-coded @rule indices.
+uci show firewall | sed -n "/\\.name='Allow-DHCPv6[^']*'\\|\\.name='Allow-MLD'\\|\\.name='Allow-ICMPv6[^']*'/s/^\\(firewall\\.[^.]*\\)\\..*/\\1/p" | while IFS= read -r section; do
+    [ -n "$section" ] && uci -q delete "$section" || true
+done
+
+# Remove inherited IPv6 assignments and global ULA configuration.
+uci -q delete network.lan.ip6assign || true
+uci -q delete network.lan.ip6hint || true
+uci -q delete network.lan.ip6ifaceid || true
+uci -q delete network.globals.ula_prefix || true
 
 uci -q batch <<EOF
 set system.@system[0].hostname='$host_name'
@@ -33,8 +44,12 @@ set system.@system[0].zonename='$zone_name'
 set network.lan.proto='static'
 set network.lan.ipaddr='$lan_ip_address'
 set network.lan.netmask='255.255.255.0'
+set network.wan.proto='dhcp'
 set dhcp.lan.interface='lan'
 set dhcp.lan.ignore='0'
+set dhcp.lan.dhcpv6='disabled'
+set dhcp.lan.ra='disabled'
+set dhcp.lan.ndp='disabled'
 set wireless.$radio.disabled='0'
 set wireless.$radio.country='ID'
 set wireless.$iface.device='$radio'
@@ -93,6 +108,12 @@ set firewall.voucher_wan='forwarding'
 set firewall.voucher_wan.src='voucher'
 set firewall.voucher_wan.dest='wan'
 EOF
+
+# Keep the WAN firewall zone compatible with the active DHCP uplink and remove wan6 membership.
+wan_zone="$(uci show firewall | sed -n "s/^\\(firewall\\.[^.]*\\)\\.name='wan'$/\\1/p" | head -n 1)"
+if [ -n "$wan_zone" ]; then
+    uci set "$wan_zone.network=wan wwan"
+fi
 
 # Set the root password once; the UCI defaults runner removes this script on success.
 printf '%s\n%s\n' "$root_password" "$root_password" | passwd >/dev/null
