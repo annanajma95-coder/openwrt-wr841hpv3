@@ -11,13 +11,31 @@ time_zone="WIB-7"
 zone_name="Asia/Jakarta"
 lan_ip_address="192.168.100.1"
 
-# Resolve the generated radio/interface once; do not create a duplicate primary AP.
+# Select only an existing LAN access point. Never convert a client/STA interface
+# into an AP: users may configure the STA as their upstream internet connection.
 wireless_config="$(uci show wireless)"
 radio="$(printf '%s\n' "$wireless_config" | sed -n 's/^wireless\.\([^=]*\)=wifi-device$/\1/p' | head -n 1)"
-iface="$(printf '%s\n' "$wireless_config" | sed -n 's/^wireless\.\([^=]*\)=wifi-iface$/\1/p' | head -n 1)"
 [ -n "$radio" ] || { logger -t 99-custom-config "No Wi-Fi radio found"; exit 1; }
+
+iface=""
+for candidate in $(printf '%s\n' "$wireless_config" | sed -n 's/^wireless\.\([^=]*\)=wifi-iface$/\1/p'); do
+    candidate_mode="$(uci -q get "wireless.$candidate.mode" || true)"
+    candidate_network="$(uci -q get "wireless.$candidate.network" || true)"
+    if [ "$candidate_mode" = "ap" ] && [ "$candidate_network" = "lan" ]; then
+        iface="$candidate"
+        break
+    fi
+done
+
+# If the generated configuration has no LAN AP (for example, its only interface
+# was changed to STA), add a separate AP instead of modifying the STA section.
 if [ -z "$iface" ]; then
     iface="main_ap"
+    suffix=0
+    while uci -q get "wireless.$iface" >/dev/null 2>&1; do
+        suffix=$((suffix + 1))
+        iface="main_ap_$suffix"
+    done
     uci -q set "wireless.$iface=wifi-iface"
 fi
 
