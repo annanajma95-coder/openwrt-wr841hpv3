@@ -139,6 +139,12 @@ jobs:
           ! grep -Fq '/etc/init.d/opennds disable' ../scripts/hotspot-firstboot.sh
           ! grep -Fq '/etc/init.d/opennds stop' ../scripts/hotspot-firstboot.sh
           grep -Fq "set wireless.hotspot.ssid='HOTSPOT'" ../scripts/hotspot-firstboot.sh
+          grep -Fq "list authenticated_users 'allow all'" ../scripts/opennds
+          grep -Fq "set dhcp.lan.ra='disabled'" ../scripts/hotspot-firstboot.sh
+          grep -Fq "set dhcp.lan.dhcpv6='disabled'" ../scripts/hotspot-firstboot.sh
+          grep -Fq "uci -q delete network.lan.ip6assign" ../scripts/hotspot-firstboot.sh
+          grep -Fq "CONFIG_PACKAGE_ppp is not set" .config
+          grep -Fq "CONFIG_PACKAGE_kmod-ipv6 is not set" .config
 
           # Fail closed rather than producing a firmware with a nonfunctional portal.
           test -s ../scripts/opennds
