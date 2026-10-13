@@ -43,6 +43,7 @@ uci -q batch <<EOF
 set system.@system[0].hostname='$host_name'
 set system.@system[0].timezone='$time_zone'
 set system.@system[0].zonename='$zone_name'
+set luci.core.mediaurlbase='/luci-static/bootstrap'
 set network.lan.proto='static'
 set network.lan.ipaddr='$lan_ip_address'
 set network.lan.netmask='255.255.255.0'
