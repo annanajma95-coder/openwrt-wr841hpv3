@@ -4,8 +4,12 @@ set -euo pipefail
 # Harus dijalankan dari direktori source OpenWrt.
 cd "$(dirname "$0")"
 
+# Workflow membuat konfigurasi dasar sebelum skrip ini dijalankan.
+# Gagal dengan pesan jelas jika langkah inisialisasi workflow terlewat.
+[[ -f .config ]] || { echo "ERROR: .config belum ada; jalankan make defconfig sebelum customize.sh" >&2; exit 1; }
+
 # OpenWrt 19.07 tidak menyediakan executable ./scripts/config (path tersebut
-# adalah direktori). Ubah simbol .config secara langsung, lalu jalankan defconfig.
+# adalah direktori). Ubah simbol .config secara langsung, lalu jalankan defconfig sekali untuk resolusi dependensi.
 config_enable() {
     local symbol="$1"
     sed -i "/^${symbol}=/d; /^# ${symbol} is not set$/d" .config
