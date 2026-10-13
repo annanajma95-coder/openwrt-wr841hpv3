@@ -26,9 +26,11 @@ for section in network.voucher dhcp.voucher wireless.hotspot firewall.voucher fi
     uci -q delete "$section" || true
 done
 
-# Remove IPv6-only firewall rules by name; avoid fragile hard-coded @rule indices.
-uci show firewall | sed -n "/\\.name='Allow-DHCPv6[^']*'\\|\\.name='Allow-MLD'\\|\\.name='Allow-ICMPv6[^']*'/s/^\\(firewall\\.[^.]*\\)\\..*/\\1/p" | while IFS= read -r section; do
-    [ -n "$section" ] && uci -q delete "$section" || true
+# Remove IPv6-only firewall rules by name; re-read after each delete because @rule indices shift.
+while :; do
+    section="$(uci show firewall | sed -n "/\\.name='Allow-DHCPv6[^']*'\\|\\.name='Allow-MLD'\\|\\.name='Allow-ICMPv6[^']*'/s/^\\(firewall\\.[^.]*\\)\\..*/\\1/p" | head -n 1)"
+    [ -n "$section" ] || break
+    uci -q delete "$section" || break
 done
 
 # Remove inherited IPv6 assignments and global ULA configuration.
