@@ -1,6 +1,6 @@
 #!/bin/sh
-# One-shot first-boot configuration, installed as /etc/uci-defaults/99-custom-config.
-# OpenWrt removes this script after a successful exit.
+# One-shot owner of runtime network/device settings, installed as /etc/uci-defaults/99-custom-config.
+# OpenWrt removes this script after a successful exit. OpenNDS settings belong only in /etc/config/opennds.
 set -eu
 
 wlan_name="SEGALA TEKNIK"
@@ -96,11 +96,6 @@ EOF
 
 # Set the root password once; the UCI defaults runner removes this script on success.
 printf '%s\n%s\n' "$root_password" "$root_password" | passwd >/dev/null
-
-# OpenNDS is configured in files/etc/config/opennds; only enable its init service here.
-if [ -x /etc/init.d/opennds ]; then
-    /etc/init.d/opennds enable
-fi
 
 # Persist all UCI changes in one commit.
 uci commit
