@@ -9,7 +9,7 @@ config opennds
 	option preauthidletimeout '30'
 	option authidletimeout '120'
 	option sessiontimeout '1200'
-	option checkinterval '60'
+	option checkinterval '15'
 	option uploadrate '0'
 	option downloadrate '0'
 	option ratecheckwindow '2'
