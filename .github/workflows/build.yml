@@ -139,6 +139,13 @@ jobs:
           grep -Fq "option checkinterval '15'" ../scripts/opennds
           grep -Fq "set luci.core.mediaurlbase='/luci-static/bootstrap'" ../scripts/hotspot-firstboot.sh
           grep -Fq 'CONFIG_PACKAGE_luci-theme-bootstrap=y' .config
+          ! grep -qx 'CONFIG_PACKAGE_luci-theme-material=y' .config
+          ! grep -qx 'CONFIG_PACKAGE_luci-theme-openwrt=y' .config
+          ! grep -qx 'CONFIG_PACKAGE_luci-theme-openwrt-2020=y' .config
+          ! grep -qx 'CONFIG_PACKAGE_luci-theme-argon=y' .config
+          ! grep -qx 'CONFIG_PACKAGE_luci-theme-design=y' .config
+          ! grep -qx 'CONFIG_PACKAGE_luci-theme-freifunk-generic=y' .config
+          ! grep -qx 'CONFIG_PACKAGE_luci-theme-freifunk-buchanan=y' .config
           ! grep -Fq '/etc/init.d/opennds disable' ../scripts/hotspot-firstboot.sh
           ! grep -Fq '/etc/init.d/opennds stop' ../scripts/hotspot-firstboot.sh
           grep -Fq "set wireless.hotspot.ssid='HOTSPOT'" ../scripts/hotspot-firstboot.sh
