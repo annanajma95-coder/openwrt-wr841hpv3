@@ -113,8 +113,8 @@ jobs:
         run: |
           set -euxo pipefail
           cd openwrt
-          mkdir -p package/firmware/wireless-regdb/patches
-          cp -r ../patches/package/firmware/wireless-regdb/patches/* package/firmware/wireless-regdb/patches/
+          mkdir -p package/network/utils/wireless-regdb/patches
+          cp -r ../patches/package/firmware/wireless-regdb/patches/* package/network/utils/wireless-regdb/patches/
           cp ../scripts/customize.sh ./customize.sh
           chmod +x customize.sh
           # Initialize the base config once; customize.sh applies selections and resolves dependencies.
