@@ -187,14 +187,14 @@ jobs:
           make -j"$(nproc)" tools/install
           make -j"$(nproc)" toolchain/install
           
-          # 2. EKSEKUSI REGHACK: Bongkar batasan 24dBm langsung pada driver mac80211 / ath9k sebelum build utama
-          # Mengunduh modul reghack untuk memodifikasi biner regulasi nirkabel Linux
-          wget -O reghack.c https://githubusercontent.com || \
-          curl -s -o reghack.c https://githubusercontent.com
+          # 2. EKSEKUSI REGHACK: Mengunduh dari tautan raw resmi yang valid
+          wget -O reghack.c https://raw.githubusercontent.com/Luminger/reghack/refs/heads/master/reghack.c || \
+          curl -s -o reghack.c https://raw.githubusercontent.com/Luminger/reghack/refs/heads/master/reghack.c
           
+          # Kompilasi skrip menjadi program biner eksekusi
           gcc -o reghack reghack.c
           
-          # Lakukan pembongkaran paksa pada database dan driver mac80211 OpenWrt
+          # Membuka paksa limitasi regulasi biner mac80211 / ath9k
           ./reghack package/kernel/mac80211/git-src/net/wireless/db.txt || true
           find build_dir/ -name "db.txt" -exec ./reghack {} \; || true
           
