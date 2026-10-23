@@ -95,6 +95,13 @@ jobs:
               network.write_text(text.replace(old, new, 1))
           PY
 
+          # MENJEBOL BATASAN INTERNAL 24dBm PADA DRIVER WR841HP V3
+          # Mengubah batasan tx-gain / ppa-gain langsung di berkas DTS nirkabel
+          sed -i 'x/tx-gain/s/24/30/' target/linux/ath79/dts/qca9533_tplink_tl-wr841hp-v3.dts || true
+          
+          # Memaksa target profile nirkabel menerima daya maksimum 30 dBm
+          sed -i 's/max-txpower = <24>;/max-txpower = <30>;/g' target/linux/ath79/dts/qca9533_tplink_tl-wr841hp-v3.dts || true
+
           test -s target/linux/ath79/dts/qca9533_tplink_tl-wr841hp-v3.dts
           grep -q 'Device/tplink_tl-wr841hp-v3' target/linux/ath79/image/generic-tp-link.mk
           grep -q 'tplink,tl-wr841hp-v3' target/linux/ath79/base-files/etc/board.d/01_leds
