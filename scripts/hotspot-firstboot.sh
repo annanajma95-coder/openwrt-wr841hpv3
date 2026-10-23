@@ -141,6 +141,10 @@ fi
 # Set the root password once; the UCI defaults runner removes this script on success.
 printf '%s\n%s\n' "$root_password" "$root_password" | passwd >/dev/null
 
+# Memaksa driver ath9k mengabaikan batasan EEPROM dan Regdb sistem
+mkdir -p /etc/modules.d
+echo "ath9k ignore_eeprom_regdomain=1" > /etc/modules.d/ath9k-regdb-bypass
+
 # Persist all UCI changes in one commit.
 uci commit
 exit 0
