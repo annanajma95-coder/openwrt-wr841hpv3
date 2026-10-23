@@ -48,6 +48,9 @@ config_enable CONFIG_PACKAGE_kmod-ath9k
 config_enable CONFIG_PACKAGE_iw
 config_enable CONFIG_PACKAGE_wireless-regdb
 
+# JENJELONG LOCK KERNEL ATH9K (Memaksa driver patuh pada Tx Power pilihan user)
+config_enable CONFIG_ATH_USER_REGD
+
 # OpenNDS terpasang dan aktif saat boot.
 config_enable CONFIG_PACKAGE_opennds
 
