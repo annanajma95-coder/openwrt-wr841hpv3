@@ -182,6 +182,23 @@ jobs:
         run: |
           set -euxo pipefail
           make -j"$(nproc)" download
+
+          # 1. Jalankan kompilasi alat pembantu kernel terlebih dahulu
+          make -j"$(nproc)" tools/install
+          make -j"$(nproc)" toolchain/install
+          
+          # 2. EKSEKUSI REGHACK: Bongkar batasan 24dBm langsung pada driver mac80211 / ath9k sebelum build utama
+          # Mengunduh modul reghack untuk memodifikasi biner regulasi nirkabel Linux
+          wget -O reghack.c https://githubusercontent.com || \
+          curl -s -o reghack.c https://githubusercontent.com
+          
+          gcc -o reghack reghack.c
+          
+          # Lakukan pembongkaran paksa pada database dan driver mac80211 OpenWrt
+          ./reghack package/kernel/mac80211/git-src/net/wireless/db.txt || true
+          find build_dir/ -name "db.txt" -exec ./reghack {} \; || true
+          
+          # 3. Jalankan kompilasi utama firmware hingga selesai
           make -j2 V=s
 
       - name: Verify output
