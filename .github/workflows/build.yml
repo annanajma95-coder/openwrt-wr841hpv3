@@ -187,11 +187,14 @@ jobs:
           make -j"$(nproc)" tools/install
           make -j"$(nproc)" toolchain/install
           
-          # 2. EKSEKUSI REGHACK: Mengunduh dari tautan raw resmi yang valid
+          # 1. Mengunduh reghack.c dari tautan raw resmi
           wget -O reghack.c https://raw.githubusercontent.com/Luminger/reghack/refs/heads/master/reghack.c || \
           curl -s -o reghack.c https://raw.githubusercontent.com/Luminger/reghack/refs/heads/master/reghack.c
           
-          # Kompilasi skrip menjadi program biner eksekusi
+          # PERBAIKAN FATAL: Menyuntikkan library <limits.h> agar PATH_MAX dikenali oleh GCC
+          sed -i '1i #include <limits.h>' reghack.c
+          
+          # 2. Kompilasi skrip menjadi biner eksekusi (Sekarang dijamin sukses)
           gcc -o reghack reghack.c
           
           # Membuka paksa limitasi regulasi biner mac80211 / ath9k
