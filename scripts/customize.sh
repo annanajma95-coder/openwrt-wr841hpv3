@@ -32,9 +32,9 @@ config_enable CONFIG_PACKAGE_luci
 config_enable CONFIG_PACKAGE_luci-base
 config_enable CONFIG_PACKAGE_luci-mod-admin-full
 config_disable CONFIG_PACKAGE_luci-theme-bootstrap
-# Argon Dark: tema gelap untuk LuCI 19.07, diambil dari cabang kompatibel 18.06.
-config_enable CONFIG_PACKAGE_luci-theme-argon
-config_disable CONFIG_PACKAGE_luci-theme-material
+# Material theme for LuCI.
+config_enable CONFIG_PACKAGE_luci-theme-material
+config_disable CONFIG_PACKAGE_luci-theme-argon
 config_disable CONFIG_PACKAGE_luci-theme-openwrt
 config_disable CONFIG_PACKAGE_luci-theme-openwrt-2020
 config_disable CONFIG_PACKAGE_luci-theme-design
