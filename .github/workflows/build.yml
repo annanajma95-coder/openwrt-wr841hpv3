@@ -107,7 +107,7 @@ jobs:
           set -euxo pipefail
           ./scripts/feeds update -a
           # Argon legacy branch is intended for LuCI 18.06-era interfaces used by this 19.07 build.
-          git clone --depth 1 --branch 18.06 \\
+          git clone --depth 1 --branch 18.06 \
             https://github.com/jerrykuku/luci-theme-argon.git package/downloads/luci-theme-argon
           ./scripts/feeds install -a
 
