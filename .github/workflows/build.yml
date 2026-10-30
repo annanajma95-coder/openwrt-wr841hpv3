@@ -126,6 +126,10 @@ jobs:
           cd openwrt
           mkdir -p files/etc/uci-defaults files/etc/config files/etc/opennds files/usr/lib/opennds
 
+          # Apply the Material theme in the installed first-boot script.
+          sed -i "s#luci.core.mediaurlbase='/luci-static/argon'#luci.main.mediaurlbase='/luci-static/material'#" ../scripts/hotspot-firstboot.sh
+          sed -i '/Enable Argon forced dark appearance/d; /: > \/etc\/dark/d' ../scripts/hotspot-firstboot.sh
+
           install -m 0644 ../scripts/hotspot-firstboot.sh files/etc/uci-defaults/99-custom-config
           install -m 0755 ../scripts/voucher.sh files/usr/lib/opennds/voucher.sh
 
