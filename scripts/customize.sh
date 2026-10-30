@@ -31,9 +31,9 @@ config_enable CONFIG_TARGET_ath79_generic_DEVICE_tplink_tl-wr841hp-v3
 config_enable CONFIG_PACKAGE_luci
 config_enable CONFIG_PACKAGE_luci-base
 config_enable CONFIG_PACKAGE_luci-mod-admin-full
-config_disable CONFIG_PACKAGE_luci-theme-bootstrap
-# Material theme for LuCI.
-config_enable CONFIG_PACKAGE_luci-theme-material
+# Bootstrap theme for LuCI.
+config_enable CONFIG_PACKAGE_luci-theme-bootstrap
+config_disable CONFIG_PACKAGE_luci-theme-material
 config_disable CONFIG_PACKAGE_luci-theme-argon
 config_disable CONFIG_PACKAGE_luci-theme-openwrt
 config_disable CONFIG_PACKAGE_luci-theme-openwrt-2020
