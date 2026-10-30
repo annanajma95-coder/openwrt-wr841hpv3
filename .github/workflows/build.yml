@@ -106,6 +106,9 @@ jobs:
         run: |
           set -euxo pipefail
           ./scripts/feeds update -a
+          # Argon legacy branch is intended for LuCI 18.06-era interfaces used by this 19.07 build.
+          git clone --depth 1 --branch 18.06 \\
+            https://github.com/jerrykuku/luci-theme-argon.git package/downloads/luci-theme-argon
           ./scripts/feeds install -a
 
       - name: Configure firmware
@@ -137,12 +140,12 @@ jobs:
           grep -Fq 'wlan_name="SEGALA TEKNIK"' ../scripts/hotspot-firstboot.sh
           grep -Fq "option enabled '1'" ../scripts/opennds
           grep -Fq "option checkinterval '15'" ../scripts/opennds
-          grep -Fq "set luci.core.mediaurlbase='/luci-static/bootstrap'" ../scripts/hotspot-firstboot.sh
-          grep -Fq 'CONFIG_PACKAGE_luci-theme-bootstrap=y' .config
+          grep -Fq "set luci.core.mediaurlbase='/luci-static/argon'" ../scripts/hotspot-firstboot.sh
+          grep -Fq 'CONFIG_PACKAGE_luci-theme-argon=y' .config
+          ! grep -qx 'CONFIG_PACKAGE_luci-theme-bootstrap=y' .config
           ! grep -qx 'CONFIG_PACKAGE_luci-theme-material=y' .config
           ! grep -qx 'CONFIG_PACKAGE_luci-theme-openwrt=y' .config
           ! grep -qx 'CONFIG_PACKAGE_luci-theme-openwrt-2020=y' .config
-          ! grep -qx 'CONFIG_PACKAGE_luci-theme-argon=y' .config
           ! grep -qx 'CONFIG_PACKAGE_luci-theme-design=y' .config
           ! grep -qx 'CONFIG_PACKAGE_luci-theme-freifunk-generic=y' .config
           ! grep -qx 'CONFIG_PACKAGE_luci-theme-freifunk-buchanan=y' .config
