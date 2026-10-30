@@ -138,8 +138,8 @@ jobs:
           grep -Fq "set network.voucher='interface'" ../scripts/hotspot-firstboot.sh
           grep -Fq 'root_password="enter"' ../scripts/hotspot-firstboot.sh
           grep -Fq 'wlan_name="SEGALA TEKNIK"' ../scripts/hotspot-firstboot.sh
-          grep -Fq "set wireless.\\$radio.country='ID'" files/etc/uci-defaults/99-custom-config
-          grep -Fq "set wireless.\\$radio.antenna_gain='0'" files/etc/uci-defaults/99-custom-config
+          grep -Fq 'set wireless.$radio.country=\'ID\'' files/etc/uci-defaults/99-custom-config
+          grep -Fq 'set wireless.$radio.antenna_gain=\'0\'' files/etc/uci-defaults/99-custom-config
           grep -Fq 'uci -q delete "wireless.$radio.txpower"' files/etc/uci-defaults/99-custom-config
           grep -Fq 'uci -q delete "wireless.$radio.rxantenna"' files/etc/uci-defaults/99-custom-config
           grep -Fq 'uci -q delete "wireless.$radio.txantenna"' files/etc/uci-defaults/99-custom-config
