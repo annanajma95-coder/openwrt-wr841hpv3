@@ -61,7 +61,7 @@ uci -q batch <<EOF
 set system.@system[0].hostname='$host_name'
 set system.@system[0].timezone='$time_zone'
 set system.@system[0].zonename='$zone_name'
-set luci.core.mediaurlbase='/luci-static/argon'
+set luci.main.mediaurlbase='/luci-static/bootstrap'
 set network.lan.proto='static'
 set network.lan.ipaddr='$lan_ip_address'
 set network.lan.netmask='255.255.255.0'
@@ -145,8 +145,6 @@ fi
 # Set the root password once; the UCI defaults runner removes this script on success.
 printf '%s\n%s\n' "$root_password" "$root_password" | passwd >/dev/null
 
-# Enable Argon forced dark appearance.
-: > /etc/dark
 
 # Persist all UCI changes in one commit.
 uci commit
