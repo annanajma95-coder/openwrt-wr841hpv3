@@ -73,6 +73,7 @@ set dhcp.lan.ra='disabled'
 set dhcp.lan.ndp='disabled'
 set wireless.$radio.disabled='0'
 set wireless.$radio.country='ID'
+set wireless.$radio.antenna_gain='0'
 set wireless.$iface.device='$radio'
 set wireless.$iface.mode='ap'
 set wireless.$iface.network='lan'
@@ -129,6 +130,11 @@ set firewall.voucher_wan='forwarding'
 set firewall.voucher_wan.src='voucher'
 set firewall.voucher_wan.dest='wan'
 EOF
+
+# Keep TX power and antenna-chain selection automatic; do not force diversity or chain masks.
+uci -q delete "wireless.$radio.txpower" || true
+uci -q delete "wireless.$radio.rxantenna" || true
+uci -q delete "wireless.$radio.txantenna" || true
 
 # Keep the WAN firewall zone compatible with the active DHCP uplink and remove wan6 membership.
 wan_zone="$(uci show firewall | sed -n "s/^\\(firewall\\.[^.]*\\)\\.name='wan'$/\\1/p" | head -n 1)"
