@@ -170,9 +170,9 @@ jobs:
           grep -Fq "set network.voucher='interface'" ../scripts/hotspot-firstboot.sh
           grep -Fq 'root_password="enter"' ../scripts/hotspot-firstboot.sh
           grep -Fq 'wlan_name="SEGALA TEKNIK"' ../scripts/hotspot-firstboot.sh
-          grep -Fq "set wireless.\$radio.country='ID'" files/etc/uci-defaults/99-custom-config
-          grep -Fq "set wireless.\$radio.antenna_gain='12'" files/etc/uci-defaults/99-custom-config
-          grep -Fq "set wireless.\$radio.diversity='1'" files/etc/uci-defaults/99-custom-config
+          grep -Fq "set wireless.\\$radio.country='ID'" files/etc/uci-defaults/99-custom-config
+          grep -Fq "set wireless.\\$radio.antenna_gain='12'" files/etc/uci-defaults/99-custom-config
+          grep -Fq "set wireless.\\$radio.diversity='1'" files/etc/uci-defaults/99-custom-config
           grep -Fq 'uci -q delete "wireless.$radio.txpower"' files/etc/uci-defaults/99-custom-config
           grep -Fq 'uci -q delete "wireless.$radio.rxantenna"' files/etc/uci-defaults/99-custom-config
           grep -Fq 'uci -q delete "wireless.$radio.txantenna"' files/etc/uci-defaults/99-custom-config
@@ -206,90 +206,9 @@ jobs:
           install -m 0600 ../scripts/vouchers files/etc/opennds/vouchers
 
           # Ensure OpenNDS remains included in the image.
-          grep -q '^CONFIG_PACKAGE_opennds=y
-      - name: Build firmware
-        shell: bash
-        working-directory: openwrt
-        run: |
-          set -euxo pipefail
-          make -j"$(nproc)" download
-          make -j2 V=s
-
-      - name: Verify output
-        shell: bash
-        run: |
-          set -euxo pipefail
-          mkdir -p artifacts
-          find openwrt/bin/targets -type f \
-            \( -name '*wr841hp*v3*' -o -name '*wr841hp-v3*' \) \
-            -exec cp -v {} artifacts/ \;
-          test -n "$(find artifacts -type f -name '*.bin' -print -quit)"
-          sha256sum artifacts/* > artifacts/SHA256SUMS
-
-      - name: Upload firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: openwrt-19.07.9-wr841hp-v3
-          path: artifacts/
-          if-no-files-found: error
-          retention-days: 14
- .config
-          grep -q '^CONFIG_PACKAGE_iw=y
-      - name: Build firmware
-        shell: bash
-        working-directory: openwrt
-        run: |
-          set -euxo pipefail
-          make -j"$(nproc)" download
-          make -j2 V=s
-
-      - name: Verify output
-        shell: bash
-        run: |
-          set -euxo pipefail
-          mkdir -p artifacts
-          find openwrt/bin/targets -type f \
-            \( -name '*wr841hp*v3*' -o -name '*wr841hp-v3*' \) \
-            -exec cp -v {} artifacts/ \;
-          test -n "$(find artifacts -type f -name '*.bin' -print -quit)"
-          sha256sum artifacts/* > artifacts/SHA256SUMS
-
-      - name: Upload firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: openwrt-19.07.9-wr841hp-v3
-          path: artifacts/
-          if-no-files-found: error
-          retention-days: 14
- .config
-          grep -q '^CONFIG_PACKAGE_wireless-regdb=y
-      - name: Build firmware
-        shell: bash
-        working-directory: openwrt
-        run: |
-          set -euxo pipefail
-          make -j"$(nproc)" download
-          make -j2 V=s
-
-      - name: Verify output
-        shell: bash
-        run: |
-          set -euxo pipefail
-          mkdir -p artifacts
-          find openwrt/bin/targets -type f \
-            \( -name '*wr841hp*v3*' -o -name '*wr841hp-v3*' \) \
-            -exec cp -v {} artifacts/ \;
-          test -n "$(find artifacts -type f -name '*.bin' -print -quit)"
-          sha256sum artifacts/* > artifacts/SHA256SUMS
-
-      - name: Upload firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: openwrt-19.07.9-wr841hp-v3
-          path: artifacts/
-          if-no-files-found: error
-          retention-days: 14
- .config
+          grep -Fq 'CONFIG_PACKAGE_opennds=y' .config
+          grep -Fq 'CONFIG_PACKAGE_iw=y' .config
+          grep -Fq 'CONFIG_PACKAGE_wireless-regdb=y' .config
           # All package selections are centralized in scripts/customize.sh.
 
       - name: Build firmware
