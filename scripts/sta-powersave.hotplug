@@ -1,0 +1,14 @@
+#!/bin/sh
+# Disable power saving only on the STA interface after its upstream network comes up.
+# Do not restart Wi-Fi or touch either AP interface.
+[ "${INTERFACE:-}" = "wwan" ] || exit 0
+[ "${ACTION:-}" = "ifup" ] || exit 0
+
+(
+    sleep 3
+    if iw dev wlan0 set power_save off 2>/dev/null; then
+        logger -t sta-powersave "Power save disabled on wlan0"
+    else
+        logger -t sta-powersave "Could not disable power save on wlan0"
+    fi
+) &
