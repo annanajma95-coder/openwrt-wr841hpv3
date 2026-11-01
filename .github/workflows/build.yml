@@ -124,13 +124,17 @@ jobs:
         run: |
           set -euxo pipefail
           cd openwrt
-          mkdir -p files/etc/uci-defaults files/etc/config files/etc/opennds files/usr/lib/opennds
+          mkdir -p files/etc/uci-defaults files/etc/config files/etc/opennds files/usr/lib/opennds files/etc/hotplug.d/iface
 
           install -m 0644 ../scripts/hotspot-firstboot.sh files/etc/uci-defaults/99-custom-config
           install -m 0755 ../scripts/voucher.sh files/usr/lib/opennds/voucher.sh
+          install -m 0755 ../scripts/sta-powersave.hotplug files/etc/hotplug.d/iface/99-sta-powersave
 
-          # Validate first-boot configuration before spending time on the full build.
+          # Validate first-boot and STA hotplug scripts before spending time on the full build.
           sh -n ../scripts/hotspot-firstboot.sh
+          sh -n ../scripts/sta-powersave.hotplug
+          grep -Fq '[ "${INTERFACE:-}" = "wwan" ] || exit 0' files/etc/hotplug.d/iface/99-sta-powersave
+          grep -Fq 'iw dev wlan0 set power_save off' files/etc/hotplug.d/iface/99-sta-powersave
           grep -Fq 'lan_ip_address="192.168.100.1"' ../scripts/hotspot-firstboot.sh
           grep -Fq "set network.voucher='interface'" ../scripts/hotspot-firstboot.sh
           grep -Fq 'root_password="enter"' ../scripts/hotspot-firstboot.sh
